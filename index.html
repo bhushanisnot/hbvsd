@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Zip Your Mouth</title>
+<meta name="theme-color" content="#221338">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#221338; --ink-2:#2e1a4a; --panel:#3a2259; --edge:#4d3170;
+  --marigold:#ffb23f; --rose:#ff5d8f; --pale:#f7edff; --muted:#a692c4;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;overscroll-behavior:none}
+body{
+  background:
+    radial-gradient(820px 480px at 12% -10%, #3d2160 0%, transparent 62%),
+    radial-gradient(700px 460px at 92% 2%, #4a2154 0%, transparent 58%),
+    var(--ink);
+  color:var(--pale);
+  font-family:"Instrument Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;
+  font-size:17px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  min-height:100dvh;
+}
+.wrap{max-width:940px;margin:0 auto;padding:22px 18px calc(40px + env(safe-area-inset-bottom))}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1fr auto;gap:26px;align-items:center;padding:8px 0 22px}
+.greet{font-size:16px;color:var(--marigold);font-weight:600;margin:0 0 10px}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
+   font-size:clamp(44px,10vw,80px);line-height:.9;letter-spacing:-.03em;margin:0 0 14px}
+h1 .l2{display:block;color:var(--marigold)}
+.lede{color:var(--muted);max-width:46ch;margin:0;font-size:16.5px}
+.heroArt svg{width:clamp(96px,22vw,168px);height:auto;display:block}
+
+/* stats + chart */
+.stats{background:var(--ink-2);border:1px solid var(--edge);border-radius:18px;padding:16px 16px 12px;margin:0 0 22px}
+.srow{display:flex;gap:20px;flex-wrap:wrap;align-items:baseline;margin:0 0 12px}
+.stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-size:24px;font-weight:800;
+  color:var(--marigold);font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:13.5px;color:var(--muted)}
+.toggle{margin-left:auto;display:flex;gap:0;border:1px solid var(--edge);border-radius:10px;overflow:hidden}
+.toggle button{background:transparent;border:0;color:var(--muted);font:inherit;font-size:13.5px;
+  font-weight:600;padding:7px 12px;cursor:pointer;min-height:36px}
+.toggle button[aria-pressed="true"]{background:var(--marigold);color:#2a163f}
+#chart{width:100%;height:auto;display:block;touch-action:manipulation}
+.caption{font-size:13.5px;color:var(--muted);margin:8px 0 0;min-height:1.4em}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}
+
+/* level grid */
+.levels{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:0 0 26px;padding:0;list-style:none}
+.tile{background:var(--ink-2);border:1px solid var(--edge);border-radius:12px;padding:8px;
+  cursor:pointer;color:inherit;font:inherit;display:flex;flex-direction:column;gap:6px;width:100%;
+  transition:border-color .15s ease}
+.tile:active{border-color:var(--marigold)}
+.tile:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+.tile.done{border-color:#7a5330;background:linear-gradient(180deg,#38234f,#2b1943)}
+.tile svg{width:100%;height:auto;display:block}
+.tmeta{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:12.5px}
+.tnum{font-weight:700}
+.ttime{color:var(--muted);font-variant-numeric:tabular-nums}
+.tile.done .ttime{color:var(--marigold)}
+footer{color:var(--muted);font-size:14px}
+
+/* play view */
+.play{display:none}
+body.playing .home{display:none}
+body.playing .play{display:flex;flex-direction:column;min-height:100dvh;justify-content:center;gap:10px}
+body.playing{overflow:hidden}
+.pbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn{background:var(--panel);color:var(--pale);border:1px solid var(--edge);border-radius:12px;
+  padding:11px 16px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;min-height:46px}
+.btn:active{border-color:var(--marigold)}
+.btn:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
+.btn.key{background:var(--marigold);color:#2a163f;border-color:var(--marigold)}
+.spacer{flex:1}
+.plabel{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:18px}
+.clock{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;color:var(--marigold)}
+.boardWrap{display:flex;justify-content:center}
+#board{width:min(94vw,540px,58dvh);height:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.msg{text-align:center;color:var(--muted);font-size:14.5px;min-height:1.4em;margin:0}
+.msg.bad{color:var(--rose)}
+.ctrls{display:flex;gap:10px;justify-content:center}
+.ctrls .btn{flex:1;max-width:170px}
+
+/* win */
+.win{position:fixed;inset:0;background:rgba(20,10,34,.85);backdrop-filter:blur(5px);
+  display:none;place-items:center;padding:20px;z-index:20}
+.win.show{display:grid}
+.card{background:var(--ink-2);border:1px solid var(--marigold);border-radius:22px;
+  padding:30px 24px;max-width:400px;width:100%;text-align:center}
+.card h3{font-family:"Bricolage Grotesque",sans-serif;font-size:26px;margin:0 0 4px;font-weight:800}
+.card .t{color:var(--marigold);font-size:38px;font-weight:800;font-variant-numeric:tabular-nums;
+  margin:2px 0 10px;font-family:"Bricolage Grotesque",sans-serif}
+.card .m{margin:0 0 20px;font-size:16.5px}
+.card .row{display:flex;gap:10px;justify-content:center}
+.card .row .btn{flex:1}
+
+@media (max-width:720px){
+  .wrap{padding:16px 14px calc(34px + env(safe-area-inset-bottom))}
+  .hero{grid-template-columns:1fr auto;gap:14px;padding:4px 0 18px}
+  .levels{grid-template-columns:repeat(4,1fr);gap:8px}
+  .lede{font-size:15.5px}
+  body{font-size:16px}
+}
+@media (max-width:420px){ .levels{grid-template-columns:repeat(3,1fr)} }
+@media (prefers-reduced-motion:reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="home">
+    <header class="hero">
+      <div>
+        <p class="greet" id="greet"></p>
+        <h1>Zip<span class="l2">Your Mouth</span></h1>
+        <p class="lede" id="lede"></p>
+      </div>
+      <div class="heroArt"><svg id="heroArt" viewBox="0 0 100 100" aria-hidden="true"></svg></div>
+    </header>
+
+    <section class="stats">
+      <div class="srow">
+        <div class="stat"><b id="sSolved">0/25</b><span>solved</span></div>
+        <div class="stat"><b id="sTotal">—</b><span>total time</span></div>
+        <div class="stat"><b id="sPace">—</b><span>best pace</span></div>
+        <div class="toggle">
+          <button id="mTime" aria-pressed="true">Time</button>
+          <button id="mPace" aria-pressed="false">Per square</button>
+        </div>
+      </div>
+      <svg id="chart" viewBox="0 0 300 104" aria-label="Best time for each trail"></svg>
+      <p class="caption" id="caption"></p>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <ul class="levels" id="levels"></ul>
+    <footer id="footer"></footer>
+  </div>
+
+  <div class="play">
+    <div class="pbar">
+      <button class="btn" id="back">←</button>
+      <span class="plabel" id="plabel"></span>
+      <span class="spacer"></span>
+      <span class="clock" id="clock">0:00</span>
+    </div>
+    <div class="boardWrap"><svg id="board" aria-label="Puzzle grid"></svg></div>
+    <p class="msg" id="msg"></p>
+    <div class="ctrls">
+      <button class="btn" id="undo">Undo</button>
+      <button class="btn" id="reset">Start over</button>
+      <button class="btn key" id="nudge">Nudge</button>
+    </div>
+  </div>
+</div>
+
+<div class="win" id="win">
+  <div class="card">
+    <h3 id="winTitle">Solved</h3>
+    <div class="t" id="winTime">0:00</div>
+    <p class="m" id="winMsg"></p>
+    <div class="row">
+      <button class="btn" id="winBack">All trails</button>
+      <button class="btn key" id="winNext">Next</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════ CONFIG — the only part to edit ══════════════ */
+const NAME    = "Vidhi";
+const GREET   = "Happy Birthday, " + NAME + "!";
+const LEDE    = "Twelve puzzles, built one at a time. Every one of them has exactly one solution, so if it works, it's the right one.";
+const WIN_MSG = "Happy birthday. This is entirely your fault.";
+const SIGNOFF = "Made for " + NAME + " by Bhushan.";
+/* ════════════════════════════════════════════════════════════ */
+
+const PUZZLES = [{"rows":5,"cols":5,"checks":[{"r":4,"c":0,"n":1},{"r":4,"c":2,"n":2},{"r":4,"c":4,"n":3},{"r":1,"c":2,"n":4},{"r":0,"c":0,"n":5},{"r":2,"c":0,"n":6},{"r":1,"c":1,"n":7}],"walls":[{"r":1,"c":4,"d":"B"},{"r":2,"c":1,"d":"B"},{"r":2,"c":3,"d":"B"}],"solution":[[4,0],[3,0],[3,1],[4,1],[4,2],[3,2],[3,3],[4,3],[4,4],[3,4],[2,4],[2,3],[2,2],[1,2],[1,3],[1,4],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[2,1],[1,1]]},{"rows":5,"cols":5,"checks":[{"r":1,"c":3,"n":1},{"r":1,"c":2,"n":2},{"r":0,"c":0,"n":3},{"r":0,"c":1,"n":4},{"r":4,"c":4,"n":5},{"r":2,"c":3,"n":6},{"r":2,"c":2,"n":7}],"walls":[{"r":2,"c":0,"d":"R"},{"r":3,"c":1,"d":"B"}],"solution":[[1,3],[1,2],[1,1],[2,1],[3,1],[3,2],[4,2],[4,1],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[3,4],[4,4],[4,3],[3,3],[2,3],[2,2]]},{"rows":5,"cols":5,"checks":[{"r":1,"c":3,"n":1},{"r":1,"c":2,"n":2},{"r":1,"c":0,"n":3},{"r":0,"c":1,"n":4},{"r":1,"c":4,"n":5},{"r":3,"c":1,"n":6}],"walls":[{"r":3,"c":1,"d":"R"},{"r":2,"c":4,"d":"B"},{"r":3,"c":2,"d":"R"}],"solution":[[1,3],[1,2],[1,1],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[1,4],[2,4],[2,3],[3,3],[3,4],[4,4],[4,3],[4,2],[3,2],[2,2],[2,1],[2,0],[3,0],[4,0],[4,1],[3,1]]},{"rows":5,"cols":5,"checks":[{"r":2,"c":4,"n":1},{"r":1,"c":1,"n":2},{"r":2,"c":0,"n":3},{"r":3,"c":0,"n":4},{"r":3,"c":2,"n":5},{"r":1,"c":3,"n":6}],"walls":[{"r":2,"c":2,"d":"R"},{"r":0,"c":1,"d":"B"}],"solution":[[2,4],[1,4],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[1,1],[1,2],[2,2],[2,1],[2,0],[3,0],[4,0],[4,1],[3,1],[3,2],[4,2],[4,3],[4,4],[3,4],[3,3],[2,3],[1,3]]},{"rows":5,"cols":5,"checks":[{"r":2,"c":2,"n":1},{"r":4,"c":0,"n":2},{"r":0,"c":4,"n":3},{"r":2,"c":1,"n":4},{"r":2,"c":0,"n":5}],"walls":[{"r":0,"c":2,"d":"B"}],"solution":[[2,2],[1,2],[1,3],[2,3],[3,3],[3,2],[3,1],[3,0],[4,0],[4,1],[4,2],[4,3],[4,4],[3,4],[2,4],[1,4],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[1,1],[2,1],[2,0]]},{"rows":6,"cols":6,"checks":[{"r":4,"c":4,"n":1},{"r":4,"c":3,"n":2},{"r":4,"c":2,"n":3},{"r":5,"c":4,"n":4},{"r":3,"c":2,"n":5},{"r":0,"c":5,"n":6},{"r":0,"c":3,"n":7},{"r":2,"c":0,"n":8},{"r":1,"c":2,"n":9}],"walls":[{"r":2,"c":5,"d":"B"},{"r":0,"c":4,"d":"B"},{"r":3,"c":1,"d":"B"}],"solution":[[4,4],[4,3],[4,2],[4,1],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[4,5],[3,5],[3,4],[3,3],[3,2],[2,2],[2,3],[1,3],[1,4],[2,4],[2,5],[1,5],[0,5],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[3,1],[2,1],[1,1],[1,2]]},{"rows":6,"cols":6,"checks":[{"r":2,"c":2,"n":1},{"r":3,"c":1,"n":2},{"r":5,"c":1,"n":3},{"r":3,"c":5,"n":4},{"r":2,"c":3,"n":5},{"r":4,"c":3,"n":6},{"r":5,"c":2,"n":7},{"r":3,"c":2,"n":8}],"walls":[{"r":0,"c":1,"d":"R"},{"r":4,"c":4,"d":"B"},{"r":1,"c":3,"d":"B"}],"solution":[[2,2],[2,1],[3,1],[4,1],[5,1],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[1,1],[1,2],[0,2],[0,3],[1,3],[1,4],[0,4],[0,5],[1,5],[2,5],[3,5],[3,4],[2,4],[2,3],[3,3],[4,3],[4,4],[4,5],[5,5],[5,4],[5,3],[5,2],[4,2],[3,2]]},{"rows":6,"cols":6,"checks":[{"r":2,"c":2,"n":1},{"r":0,"c":3,"n":2},{"r":5,"c":0,"n":3},{"r":5,"c":1,"n":4},{"r":5,"c":5,"n":5},{"r":3,"c":1,"n":6},{"r":4,"c":3,"n":7},{"r":3,"c":4,"n":8}],"walls":[{"r":2,"c":0,"d":"R"},{"r":1,"c":4,"d":"R"}],"solution":[[2,2],[2,1],[1,1],[1,2],[1,3],[0,3],[0,2],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[4,5],[3,5],[2,5],[1,5],[0,5],[0,4],[1,4],[2,4],[2,3],[3,3],[3,2],[3,1],[4,1],[4,2],[4,3],[4,4],[3,4]]},{"rows":6,"cols":6,"checks":[{"r":4,"c":4,"n":1},{"r":2,"c":4,"n":2},{"r":2,"c":3,"n":3},{"r":3,"c":2,"n":4},{"r":3,"c":1,"n":5},{"r":1,"c":0,"n":6},{"r":5,"c":2,"n":7}],"walls":[{"r":4,"c":2,"d":"R"},{"r":5,"c":1,"d":"R"},{"r":2,"c":2,"d":"R"},{"r":0,"c":3,"d":"B"},{"r":2,"c":4,"d":"R"}],"solution":[[4,4],[3,4],[2,4],[1,4],[1,3],[2,3],[3,3],[4,3],[5,3],[5,4],[5,5],[4,5],[3,5],[2,5],[1,5],[0,5],[0,4],[0,3],[0,2],[1,2],[2,2],[3,2],[3,1],[2,1],[1,1],[0,1],[0,0],[1,0],[2,0],[3,0],[4,0],[5,0],[5,1],[4,1],[4,2],[5,2]]},{"rows":6,"cols":6,"checks":[{"r":2,"c":2,"n":1},{"r":4,"c":1,"n":2},{"r":5,"c":2,"n":3},{"r":3,"c":2,"n":4},{"r":3,"c":3,"n":5},{"r":5,"c":5,"n":6},{"r":2,"c":3,"n":7}],"walls":[{"r":0,"c":1,"d":"R"},{"r":3,"c":3,"d":"R"},{"r":2,"c":3,"d":"R"}],"solution":[[2,2],[2,1],[1,1],[0,1],[0,0],[1,0],[2,0],[3,0],[3,1],[4,1],[4,0],[5,0],[5,1],[5,2],[4,2],[3,2],[3,3],[4,3],[5,3],[5,4],[5,5],[4,5],[4,4],[3,4],[3,5],[2,5],[2,4],[1,4],[1,5],[0,5],[0,4],[0,3],[0,2],[1,2],[1,3],[2,3]]},{"rows":6,"cols":6,"checks":[{"r":4,"c":1,"n":1},{"r":5,"c":2,"n":2},{"r":3,"c":5,"n":3},{"r":0,"c":0,"n":4},{"r":1,"c":1,"n":5},{"r":1,"c":3,"n":6}],"walls":[{"r":2,"c":1,"d":"B"},{"r":5,"c":3,"d":"R"},{"r":3,"c":0,"d":"R"}],"solution":[[4,1],[3,1],[3,2],[4,2],[4,3],[5,3],[5,2],[5,1],[5,0],[4,0],[3,0],[2,0],[2,1],[2,2],[2,3],[3,3],[3,4],[4,4],[5,4],[5,5],[4,5],[3,5],[2,5],[2,4],[1,4],[1,5],[0,5],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[1,1],[1,2],[1,3]]},{"rows":7,"cols":7,"checks":[{"r":6,"c":6,"n":1},{"r":6,"c":5,"n":2},{"r":6,"c":1,"n":3},{"r":5,"c":0,"n":4},{"r":5,"c":1,"n":5},{"r":2,"c":4,"n":6},{"r":2,"c":2,"n":7},{"r":1,"c":0,"n":8},{"r":1,"c":2,"n":9},{"r":1,"c":6,"n":10},{"r":3,"c":5,"n":11}],"walls":[{"r":4,"c":2,"d":"R"},{"r":3,"c":1,"d":"R"},{"r":4,"c":6,"d":"B"},{"r":0,"c":4,"d":"B"},{"r":3,"c":3,"d":"B"},{"r":2,"c":4,"d":"R"},{"r":2,"c":0,"d":"B"}],"solution":[[6,6],[5,6],[5,5],[6,5],[6,4],[5,4],[4,4],[4,3],[5,3],[6,3],[6,2],[6,1],[6,0],[5,0],[4,0],[3,0],[3,1],[4,1],[5,1],[5,2],[4,2],[3,2],[3,3],[3,4],[2,4],[1,4],[1,3],[2,3],[2,2],[2,1],[2,0],[1,0],[0,0],[0,1],[1,1],[1,2],[0,2],[0,3],[0,4],[0,5],[0,6],[1,6],[1,5],[2,5],[2,6],[3,6],[4,6],[4,5],[3,5]]},{"rows":7,"cols":7,"checks":[{"r":5,"c":5,"n":1},{"r":5,"c":1,"n":2},{"r":5,"c":2,"n":3},{"r":6,"c":2,"n":4},{"r":3,"c":2,"n":5},{"r":3,"c":6,"n":6},{"r":0,"c":6,"n":7},{"r":1,"c":4,"n":8},{"r":2,"c":4,"n":9},{"r":2,"c":2,"n":10}],"walls":[{"r":1,"c":1,"d":"B"},{"r":5,"c":4,"d":"B"},{"r":0,"c":2,"d":"B"},{"r":5,"c":3,"d":"R"},{"r":1,"c":2,"d":"R"},{"r":2,"c":4,"d":"R"}],"solution":[[5,5],[5,4],[4,4],[4,5],[4,6],[5,6],[6,6],[6,5],[6,4],[6,3],[5,3],[4,3],[4,2],[4,1],[5,1],[5,2],[6,2],[6,1],[6,0],[5,0],[4,0],[3,0],[2,0],[2,1],[3,1],[3,2],[3,3],[3,4],[3,5],[3,6],[2,6],[2,5],[1,5],[1,6],[0,6],[0,5],[0,4],[1,4],[2,4],[2,3],[1,3],[0,3],[0,2],[0,1],[0,0],[1,0],[1,1],[1,2],[2,2]]},{"rows":7,"cols":7,"checks":[{"r":6,"c":6,"n":1},{"r":4,"c":5,"n":2},{"r":1,"c":3,"n":3},{"r":3,"c":5,"n":4},{"r":2,"c":6,"n":5},{"r":0,"c":5,"n":6},{"r":0,"c":3,"n":7},{"r":1,"c":1,"n":8},{"r":4,"c":0,"n":9},{"r":5,"c":1,"n":10}],"walls":[{"r":1,"c":1,"d":"B"},{"r":5,"c":6,"d":"B"},{"r":2,"c":1,"d":"R"},{"r":6,"c":2,"d":"R"},{"r":4,"c":2,"d":"B"},{"r":3,"c":2,"d":"B"}],"solution":[[6,6],[6,5],[6,4],[6,3],[5,3],[5,4],[5,5],[5,6],[4,6],[4,5],[4,4],[3,4],[2,4],[2,3],[1,3],[1,4],[1,5],[2,5],[3,5],[3,6],[2,6],[1,6],[0,6],[0,5],[0,4],[0,3],[0,2],[0,1],[0,0],[1,0],[1,1],[1,2],[2,2],[3,2],[3,3],[4,3],[4,2],[4,1],[3,1],[2,1],[2,0],[3,0],[4,0],[5,0],[6,0],[6,1],[6,2],[5,2],[5,1]]},{"rows":7,"cols":7,"checks":[{"r":4,"c":2,"n":1},{"r":6,"c":2,"n":2},{"r":5,"c":1,"n":3},{"r":3,"c":0,"n":4},{"r":5,"c":3,"n":5},{"r":3,"c":6,"n":6},{"r":0,"c":2,"n":7},{"r":3,"c":4,"n":8},{"r":1,"c":5,"n":9}],"walls":[{"r":3,"c":4,"d":"R"},{"r":4,"c":4,"d":"B"},{"r":0,"c":3,"d":"R"},{"r":1,"c":2,"d":"B"}],"solution":[[4,2],[5,2],[6,2],[6,1],[6,0],[5,0],[5,1],[4,1],[4,0],[3,0],[3,1],[3,2],[3,3],[4,3],[5,3],[6,3],[6,4],[5,4],[5,5],[6,5],[6,6],[5,6],[4,6],[3,6],[2,6],[1,6],[0,6],[0,5],[0,4],[1,4],[1,3],[0,3],[0,2],[1,2],[1,1],[0,1],[0,0],[1,0],[2,0],[2,1],[2,2],[2,3],[2,4],[3,4],[4,4],[4,5],[3,5],[2,5],[1,5]]},{"rows":7,"cols":7,"checks":[{"r":0,"c":2,"n":1},{"r":0,"c":3,"n":2},{"r":0,"c":4,"n":3},{"r":4,"c":5,"n":4},{"r":5,"c":5,"n":5},{"r":2,"c":2,"n":6},{"r":3,"c":2,"n":7},{"r":4,"c":1,"n":8},{"r":5,"c":1,"n":9}],"walls":[{"r":1,"c":1,"d":"B"},{"r":4,"c":1,"d":"R"},{"r":2,"c":3,"d":"B"},{"r":2,"c":6,"d":"B"},{"r":4,"c":5,"d":"B"},{"r":2,"c":1,"d":"R"}],"solution":[[0,2],[0,1],[0,0],[1,0],[1,1],[1,2],[1,3],[0,3],[0,4],[1,4],[1,5],[0,5],[0,6],[1,6],[2,6],[2,5],[3,5],[3,6],[4,6],[4,5],[4,4],[5,4],[5,5],[5,6],[6,6],[6,5],[6,4],[6,3],[5,3],[4,3],[3,3],[3,4],[2,4],[2,3],[2,2],[3,2],[4,2],[5,2],[6,2],[6,1],[6,0],[5,0],[4,0],[3,0],[2,0],[2,1],[3,1],[4,1],[5,1]]},{"rows":7,"cols":7,"checks":[{"r":5,"c":1,"n":1},{"r":6,"c":0,"n":2},{"r":2,"c":0,"n":3},{"r":0,"c":4,"n":4},{"r":4,"c":2,"n":5},{"r":5,"c":4,"n":6},{"r":4,"c":6,"n":7},{"r":2,"c":6,"n":8}],"walls":[{"r":3,"c":1,"d":"R"},{"r":1,"c":0,"d":"B"},{"r":4,"c":3,"d":"B"},{"r":5,"c":1,"d":"R"},{"r":3,"c":2,"d":"R"},{"r":4,"c":5,"d":"R"},{"r":1,"c":2,"d":"B"},{"r":3,"c":5,"d":"R"}],"solution":[[5,1],[6,1],[6,0],[5,0],[4,0],[4,1],[3,1],[3,0],[2,0],[2,1],[1,1],[1,0],[0,0],[0,1],[0,2],[1,2],[1,3],[0,3],[0,4],[0,5],[0,6],[1,6],[1,5],[1,4],[2,4],[2,5],[3,5],[3,4],[3,3],[2,3],[2,2],[3,2],[4,2],[4,3],[4,4],[4,5],[5,5],[5,4],[5,3],[5,2],[6,2],[6,3],[6,4],[6,5],[6,6],[5,6],[4,6],[3,6],[2,6]]},{"rows":8,"cols":8,"checks":[{"r":4,"c":1,"n":1},{"r":4,"c":2,"n":2},{"r":3,"c":5,"n":3},{"r":2,"c":7,"n":4},{"r":0,"c":7,"n":5},{"r":2,"c":6,"n":6},{"r":0,"c":5,"n":7},{"r":0,"c":2,"n":8},{"r":6,"c":0,"n":9},{"r":6,"c":1,"n":10},{"r":7,"c":3,"n":11},{"r":7,"c":5,"n":12},{"r":6,"c":3,"n":13},{"r":5,"c":3,"n":14}],"walls":[{"r":2,"c":0,"d":"B"},{"r":1,"c":1,"d":"B"},{"r":5,"c":6,"d":"B"},{"r":3,"c":4,"d":"B"},{"r":2,"c":3,"d":"B"},{"r":3,"c":5,"d":"B"},{"r":4,"c":7,"d":"B"},{"r":4,"c":2,"d":"B"},{"r":2,"c":3,"d":"R"},{"r":3,"c":2,"d":"B"}],"solution":[[4,1],[4,2],[4,3],[3,3],[3,2],[2,2],[2,3],[1,3],[1,4],[2,4],[3,4],[3,5],[3,6],[4,6],[4,7],[3,7],[2,7],[1,7],[0,7],[0,6],[1,6],[2,6],[2,5],[1,5],[0,5],[0,4],[0,3],[0,2],[1,2],[1,1],[0,1],[0,0],[1,0],[2,0],[2,1],[3,1],[3,0],[4,0],[5,0],[6,0],[7,0],[7,1],[6,1],[5,1],[5,2],[6,2],[7,2],[7,3],[7,4],[7,5],[6,5],[6,6],[7,6],[7,7],[6,7],[5,7],[5,6],[5,5],[4,5],[4,4],[5,4],[6,4],[6,3],[5,3]]},{"rows":8,"cols":8,"checks":[{"r":4,"c":3,"n":1},{"r":5,"c":4,"n":2},{"r":4,"c":4,"n":3},{"r":3,"c":2,"n":4},{"r":7,"c":1,"n":5},{"r":0,"c":1,"n":6},{"r":0,"c":2,"n":7},{"r":0,"c":3,"n":8},{"r":0,"c":4,"n":9},{"r":3,"c":6,"n":10},{"r":2,"c":6,"n":11},{"r":0,"c":5,"n":12},{"r":5,"c":7,"n":13}],"walls":[{"r":1,"c":0,"d":"B"},{"r":6,"c":1,"d":"R"},{"r":7,"c":5,"d":"R"},{"r":4,"c":1,"d":"R"},{"r":1,"c":2,"d":"B"},{"r":5,"c":3,"d":"B"},{"r":7,"c":3,"d":"R"},{"r":2,"c":1,"d":"R"},{"r":4,"c":4,"d":"B"},{"r":6,"c":6,"d":"R"}],"solution":[[4,3],[5,3],[5,4],[6,4],[7,4],[7,5],[6,5],[5,5],[4,5],[4,4],[3,4],[3,3],[2,3],[2,2],[3,2],[4,2],[5,2],[6,2],[6,3],[7,3],[7,2],[7,1],[7,0],[6,0],[6,1],[5,1],[5,0],[4,0],[4,1],[3,1],[3,0],[2,0],[2,1],[1,1],[1,0],[0,0],[0,1],[0,2],[1,2],[1,3],[0,3],[0,4],[1,4],[2,4],[2,5],[3,5],[3,6],[2,6],[1,6],[1,5],[0,5],[0,6],[0,7],[1,7],[2,7],[3,7],[4,7],[4,6],[5,6],[6,6],[7,6],[7,7],[6,7],[5,7]]},{"rows":8,"cols":8,"checks":[{"r":5,"c":1,"n":1},{"r":4,"c":3,"n":2},{"r":7,"c":1,"n":3},{"r":6,"c":5,"n":4},{"r":6,"c":6,"n":5},{"r":2,"c":4,"n":6},{"r":2,"c":3,"n":7},{"r":1,"c":7,"n":8},{"r":0,"c":2,"n":9},{"r":0,"c":0,"n":10},{"r":2,"c":0,"n":11},{"r":3,"c":0,"n":12}],"walls":[{"r":4,"c":6,"d":"B"},{"r":5,"c":5,"d":"B"},{"r":2,"c":0,"d":"R"},{"r":4,"c":3,"d":"B"},{"r":2,"c":6,"d":"R"},{"r":5,"c":4,"d":"R"},{"r":6,"c":2,"d":"B"},{"r":6,"c":4,"d":"B"},{"r":3,"c":5,"d":"B"},{"r":5,"c":1,"d":"B"},{"r":2,"c":5,"d":"R"},{"r":1,"c":1,"d":"R"}],"solution":[[5,1],[5,0],[4,0],[4,1],[3,1],[3,2],[3,3],[4,3],[4,2],[5,2],[5,3],[5,4],[6,4],[6,3],[6,2],[6,1],[6,0],[7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[6,5],[6,6],[7,6],[7,7],[6,7],[5,7],[5,6],[5,5],[4,5],[4,4],[3,4],[3,5],[2,5],[2,4],[2,3],[1,3],[1,4],[1,5],[1,6],[2,6],[3,6],[4,6],[4,7],[3,7],[2,7],[1,7],[0,7],[0,6],[0,5],[0,4],[0,3],[0,2],[1,2],[2,2],[2,1],[1,1],[0,1],[0,0],[1,0],[2,0],[3,0]]},{"rows":8,"cols":8,"checks":[{"r":5,"c":4,"n":1},{"r":4,"c":3,"n":2},{"r":2,"c":4,"n":3},{"r":3,"c":1,"n":4},{"r":2,"c":0,"n":5},{"r":0,"c":1,"n":6},{"r":1,"c":7,"n":7},{"r":7,"c":7,"n":8},{"r":7,"c":4,"n":9},{"r":6,"c":0,"n":10},{"r":4,"c":0,"n":11},{"r":5,"c":1,"n":12}],"walls":[{"r":3,"c":1,"d":"R"},{"r":4,"c":3,"d":"B"},{"r":5,"c":6,"d":"B"},{"r":4,"c":5,"d":"R"},{"r":5,"c":4,"d":"B"},{"r":3,"c":6,"d":"R"},{"r":0,"c":1,"d":"B"},{"r":0,"c":3,"d":"R"},{"r":5,"c":5,"d":"R"},{"r":2,"c":3,"d":"B"},{"r":1,"c":2,"d":"R"},{"r":1,"c":5,"d":"B"}],"solution":[[5,4],[5,3],[5,2],[4,2],[3,2],[3,3],[4,3],[4,4],[3,4],[2,4],[2,3],[2,2],[1,2],[1,1],[2,1],[3,1],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[1,3],[1,4],[0,4],[0,5],[1,5],[1,6],[0,6],[0,7],[1,7],[2,7],[3,7],[4,7],[5,7],[5,6],[4,6],[3,6],[2,6],[2,5],[3,5],[4,5],[5,5],[6,5],[6,6],[6,7],[7,7],[7,6],[7,5],[7,4],[6,4],[6,3],[7,3],[7,2],[6,2],[6,1],[7,1],[7,0],[6,0],[5,0],[4,0],[4,1],[5,1]]},{"rows":8,"cols":8,"checks":[{"r":7,"c":0,"n":1},{"r":0,"c":2,"n":2},{"r":3,"c":4,"n":3},{"r":1,"c":3,"n":4},{"r":0,"c":6,"n":5},{"r":4,"c":6,"n":6},{"r":6,"c":6,"n":7},{"r":7,"c":4,"n":8},{"r":7,"c":2,"n":9},{"r":7,"c":1,"n":10},{"r":6,"c":4,"n":11}],"walls":[{"r":0,"c":5,"d":"B"},{"r":5,"c":5,"d":"B"},{"r":4,"c":3,"d":"B"},{"r":2,"c":6,"d":"R"},{"r":3,"c":2,"d":"R"},{"r":1,"c":0,"d":"R"},{"r":4,"c":1,"d":"R"},{"r":6,"c":2,"d":"B"},{"r":5,"c":1,"d":"B"},{"r":5,"c":2,"d":"R"},{"r":4,"c":4,"d":"B"},{"r":2,"c":4,"d":"R"},{"r":3,"c":6,"d":"B"},{"r":3,"c":2,"d":"B"}],"solution":[[7,0],[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[1,2],[1,1],[2,1],[2,2],[3,2],[3,1],[4,1],[5,1],[5,2],[4,2],[4,3],[4,4],[3,4],[3,3],[2,3],[2,4],[1,4],[1,3],[0,3],[0,4],[0,5],[0,6],[0,7],[1,7],[2,7],[3,7],[3,6],[2,6],[1,6],[1,5],[2,5],[3,5],[4,5],[5,5],[5,6],[4,6],[4,7],[5,7],[6,7],[7,7],[7,6],[6,6],[6,5],[7,5],[7,4],[7,3],[7,2],[7,1],[6,1],[6,2],[6,3],[5,3],[5,4],[6,4]]},{"rows":9,"cols":9,"checks":[{"r":4,"c":0,"n":1},{"r":1,"c":8,"n":2},{"r":1,"c":6,"n":3},{"r":3,"c":7,"n":4},{"r":2,"c":8,"n":5},{"r":5,"c":7,"n":6},{"r":4,"c":5,"n":7},{"r":7,"c":7,"n":8},{"r":8,"c":7,"n":9},{"r":7,"c":4,"n":10},{"r":5,"c":1,"n":11},{"r":4,"c":1,"n":12},{"r":4,"c":3,"n":13},{"r":3,"c":5,"n":14},{"r":1,"c":5,"n":15},{"r":1,"c":2,"n":16},{"r":3,"c":1,"n":17}],"walls":[{"r":7,"c":2,"d":"R"},{"r":4,"c":2,"d":"R"},{"r":5,"c":5,"d":"B"},{"r":6,"c":1,"d":"R"},{"r":3,"c":2,"d":"R"},{"r":3,"c":3,"d":"R"},{"r":8,"c":4,"d":"R"},{"r":1,"c":2,"d":"B"},{"r":7,"c":1,"d":"R"},{"r":5,"c":8,"d":"B"},{"r":4,"c":5,"d":"B"},{"r":3,"c":6,"d":"B"}],"solution":[[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[1,8],[1,7],[1,6],[2,6],[3,6],[3,7],[2,7],[2,8],[3,8],[4,8],[5,8],[5,7],[4,7],[4,6],[4,5],[4,4],[5,4],[5,5],[5,6],[6,6],[7,6],[7,7],[6,7],[6,8],[7,8],[8,8],[8,7],[8,6],[8,5],[7,5],[6,5],[6,4],[7,4],[8,4],[8,3],[7,3],[6,3],[6,2],[7,2],[8,2],[8,1],[8,0],[7,0],[7,1],[6,1],[6,0],[5,0],[5,1],[4,1],[4,2],[5,2],[5,3],[4,3],[3,3],[2,3],[2,4],[3,4],[3,5],[2,5],[1,5],[1,4],[1,3],[1,2],[1,1],[2,1],[2,2],[3,2],[3,1]]},{"rows":9,"cols":9,"checks":[{"r":6,"c":6,"n":1},{"r":7,"c":7,"n":2},{"r":1,"c":6,"n":3},{"r":3,"c":5,"n":4},{"r":4,"c":5,"n":5},{"r":8,"c":3,"n":6},{"r":7,"c":1,"n":7},{"r":8,"c":0,"n":8},{"r":5,"c":3,"n":9},{"r":2,"c":0,"n":10},{"r":1,"c":3,"n":11},{"r":2,"c":1,"n":12},{"r":3,"c":3,"n":13},{"r":4,"c":4,"n":14},{"r":3,"c":4,"n":15},{"r":0,"c":4,"n":16}],"walls":[{"r":4,"c":6,"d":"B"},{"r":4,"c":6,"d":"R"},{"r":7,"c":5,"d":"R"},{"r":1,"c":2,"d":"B"},{"r":0,"c":2,"d":"B"},{"r":0,"c":6,"d":"B"},{"r":5,"c":3,"d":"R"},{"r":5,"c":5,"d":"R"},{"r":5,"c":1,"d":"B"},{"r":2,"c":7,"d":"R"},{"r":1,"c":5,"d":"B"},{"r":4,"c":2,"d":"B"},{"r":3,"c":2,"d":"B"}],"solution":[[6,6],[5,6],[5,7],[6,7],[7,7],[7,6],[8,6],[8,7],[8,8],[7,8],[6,8],[5,8],[4,8],[4,7],[3,7],[3,8],[2,8],[1,8],[0,8],[0,7],[0,6],[0,5],[1,5],[1,6],[1,7],[2,7],[2,6],[2,5],[3,5],[3,6],[4,6],[4,5],[5,5],[5,4],[6,4],[6,5],[7,5],[8,5],[8,4],[7,4],[7,3],[8,3],[8,2],[7,2],[7,1],[8,1],[8,0],[7,0],[6,0],[6,1],[6,2],[6,3],[5,3],[5,2],[5,1],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[0,2],[0,3],[1,3],[1,2],[1,1],[2,1],[2,2],[2,3],[3,3],[3,2],[3,1],[4,1],[4,2],[4,3],[4,4],[3,4],[2,4],[1,4],[0,4]]},{"rows":9,"cols":9,"checks":[{"r":0,"c":8,"n":1},{"r":2,"c":7,"n":2},{"r":6,"c":6,"n":3},{"r":8,"c":8,"n":4},{"r":8,"c":7,"n":5},{"r":8,"c":6,"n":6},{"r":4,"c":4,"n":7},{"r":5,"c":4,"n":8},{"r":6,"c":4,"n":9},{"r":7,"c":3,"n":10},{"r":7,"c":4,"n":11},{"r":8,"c":4,"n":12},{"r":5,"c":0,"n":13},{"r":2,"c":1,"n":14},{"r":5,"c":1,"n":15}],"walls":[{"r":7,"c":7,"d":"R"},{"r":0,"c":4,"d":"R"},{"r":2,"c":6,"d":"R"},{"r":4,"c":6,"d":"R"},{"r":6,"c":7,"d":"R"},{"r":4,"c":3,"d":"R"},{"r":1,"c":2,"d":"B"},{"r":6,"c":6,"d":"R"},{"r":3,"c":7,"d":"B"},{"r":6,"c":1,"d":"B"},{"r":2,"c":3,"d":"B"},{"r":2,"c":6,"d":"B"},{"r":2,"c":7,"d":"R"},{"r":8,"c":1,"d":"R"},{"r":4,"c":4,"d":"B"},{"r":1,"c":1,"d":"R"},{"r":2,"c":3,"d":"R"},{"r":3,"c":2,"d":"B"}],"solution":[[0,8],[1,8],[2,8],[3,8],[3,7],[2,7],[1,7],[0,7],[0,6],[0,5],[1,5],[1,6],[2,6],[2,5],[3,5],[3,6],[4,6],[5,6],[6,6],[7,6],[7,7],[6,7],[5,7],[4,7],[4,8],[5,8],[6,8],[7,8],[8,8],[8,7],[8,6],[8,5],[7,5],[6,5],[5,5],[4,5],[4,4],[3,4],[2,4],[1,4],[0,4],[0,3],[0,2],[1,2],[1,3],[2,3],[2,2],[3,2],[3,3],[4,3],[5,3],[5,4],[6,4],[6,3],[7,3],[7,4],[8,4],[8,3],[8,2],[7,2],[7,1],[8,1],[8,0],[7,0],[6,0],[5,0],[4,0],[3,0],[2,0],[1,0],[0,0],[0,1],[1,1],[2,1],[3,1],[4,1],[4,2],[5,2],[6,2],[6,1],[5,1]]}];
+
+const $ = s => document.querySelector(s);
+const store = {
+  key:"zip-your-mouth-v1", data:{best:{}},
+  load(){ try{const r=localStorage.getItem(this.key); if(r) this.data=JSON.parse(r);}catch(e){} },
+  save(){ try{localStorage.setItem(this.key,JSON.stringify(this.data));}catch(e){} }
+};
+store.load();
+
+const fmt = ms => { const t=Math.round(ms/1000); return Math.floor(t/60)+":"+String(t%60).padStart(2,"0"); };
+const key = (r,c) => r+","+c;
+const SIZES = [...new Set(PUZZLES.map(p=>p.rows))].sort((a,b)=>a-b);
+const BAND  = {5:"#ff5d8f",6:"#ff7d6b",7:"#ff9a52",8:"#ffb23f",9:"#ffd37a"};
+
+$("#greet").textContent = GREET;
+$("#lede").textContent  = LEDE;
+$("#footer").textContent = SIGNOFF;
+
+/* ── stats + chart ────────────────────────────────────── */
+let mode = "time";
+function value(i){
+  const b = store.data.best[i];
+  if(!b) return null;
+  return mode==="time" ? b : b/(PUZZLES[i].rows*PUZZLES[i].cols);
+}
+function renderChart(){
+  const n=PUZZLES.length, W=300, H=104, top=6, base=84;
+  const gap=1.6, bw=(W-gap*(n-1))/n;
+  const vals=PUZZLES.map((_,i)=>value(i));
+  const solved=vals.filter(v=>v!==null);
+  const max=Math.max(...solved,1);
+  let s="";
+  s+=`<line x1="0" y1="${base}" x2="${W}" y2="${base}" stroke="#4d3170" stroke-width="1"/>`;
+  if(solved.length){
+    const avg=solved.reduce((a,b)=>a+b,0)/solved.length;
+    const y=base-(avg/max)*(base-top);
+    s+=`<line x1="0" y1="${y.toFixed(1)}" x2="${W}" y2="${y.toFixed(1)}" stroke="#a692c4"
+         stroke-width="1" stroke-dasharray="3 3"/>`;
+    s+=`<text x="${W-1}" y="${(y-3).toFixed(1)}" fill="#a692c4" font-size="7" text-anchor="end"
+         font-family="Instrument Sans,sans-serif">average</text>`;
+  }
+  PUZZLES.forEach((p,i)=>{
+    const x=i*(bw+gap), v=vals[i];
+    if(v===null){
+      s+=`<rect x="${x.toFixed(2)}" y="${base-3}" width="${bw.toFixed(2)}" height="3" rx="1.2" fill="#3a2259"/>`;
+    }else{
+      const h=Math.max(3,(v/max)*(base-top));
+      s+=`<rect x="${x.toFixed(2)}" y="${(base-h).toFixed(2)}" width="${bw.toFixed(2)}"
+           height="${h.toFixed(2)}" rx="1.6" fill="${BAND[p.rows]}"/>`;
+    }
+    s+=`<rect class="hit" data-i="${i}" x="${x.toFixed(2)}" y="0" width="${bw.toFixed(2)}"
+         height="${base}" fill="transparent" style="cursor:pointer"/>`;
+    if((i+1)%5===0||i===0){
+      s+=`<text x="${(x+bw/2).toFixed(2)}" y="${H-8}" fill="#a692c4" font-size="7.5"
+           text-anchor="middle" font-family="Instrument Sans,sans-serif">${i+1}</text>`;
+    }
+  });
+  $("#chart").innerHTML=s;
+  $("#chart").querySelectorAll(".hit").forEach(el=>{
+    el.onclick=()=>{
+      const i=+el.dataset.i, p=PUZZLES[i], b=store.data.best[i];
+      $("#caption").textContent = b
+        ? `Trail ${i+1} · ${p.rows}×${p.cols} · ${fmt(b)} · ${(b/1000/(p.rows*p.cols)).toFixed(1)}s per square`
+        : `Trail ${i+1} · ${p.rows}×${p.cols} · not solved yet`;
+    };
+  });
+  $("#legend").innerHTML = SIZES.map(z=>`<span><i style="background:${BAND[z]}"></i>${z}×${z}</span>`).join("");
+}
+function renderStats(){
+  const done=PUZZLES.map((_,i)=>store.data.best[i]).filter(Boolean);
+  $("#sSolved").textContent = done.length+"/"+PUZZLES.length;
+  $("#sTotal").textContent  = done.length ? fmt(done.reduce((a,b)=>a+b,0)) : "—";
+  const paces=PUZZLES.map((p,i)=>store.data.best[i]?store.data.best[i]/1000/(p.rows*p.cols):null).filter(v=>v!==null);
+  $("#sPace").textContent = paces.length ? Math.min(...paces).toFixed(1)+"s" : "—";
+  $("#caption").textContent = done.length ? "Tap a bar for the detail." : "Solve a trail and it shows up here.";
+}
+$("#mTime").onclick=()=>{mode="time";$("#mTime").setAttribute("aria-pressed","true");$("#mPace").setAttribute("aria-pressed","false");renderChart();};
+$("#mPace").onclick=()=>{mode="pace";$("#mPace").setAttribute("aria-pressed","true");$("#mTime").setAttribute("aria-pressed","false");renderChart();};
+
+/* ── level tiles ──────────────────────────────────────── */
+function mini(p,size){
+  const pad=2, cs=(size-pad*2)/Math.max(p.rows,p.cols);
+  let s=`<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">`;
+  s+=`<rect x="${pad}" y="${pad}" width="${cs*p.cols}" height="${cs*p.rows}" rx="3" fill="#311c4f"/>`;
+  for(let r=1;r<p.rows;r++) s+=`<line x1="${pad}" y1="${pad+r*cs}" x2="${pad+cs*p.cols}" y2="${pad+r*cs}" stroke="#4d3170" stroke-width=".6"/>`;
+  for(let c=1;c<p.cols;c++) s+=`<line x1="${pad+c*cs}" y1="${pad}" x2="${pad+c*cs}" y2="${pad+cs*p.rows}" stroke="#4d3170" stroke-width=".6"/>`;
+  p.walls.forEach(w=>{const x=pad+w.c*cs,y=pad+w.r*cs;
+    s+= w.d==="R" ? `<line x1="${x+cs}" y1="${y}" x2="${x+cs}" y2="${y+cs}" stroke="#f7edff" stroke-width="1.4" stroke-linecap="round"/>`
+                  : `<line x1="${x}" y1="${y+cs}" x2="${x+cs}" y2="${y+cs}" stroke="#f7edff" stroke-width="1.4" stroke-linecap="round"/>`;});
+  p.checks.forEach(ch=>{ s+=`<circle cx="${pad+ch.c*cs+cs/2}" cy="${pad+ch.r*cs+cs/2}" r="${cs*0.24}" fill="${BAND[p.rows]}"/>`; });
+  return s+"</svg>";
+}
+function renderHome(){
+  const ul=$("#levels"); ul.innerHTML="";
+  PUZZLES.forEach((p,i)=>{
+    const best=store.data.best[i];
+    const li=document.createElement("li"), b=document.createElement("button");
+    b.className="tile"+(best?" done":"");
+    b.innerHTML=mini(p,100)+`<div class="tmeta"><span class="tnum">${i+1}</span>
+      <span class="ttime">${best?fmt(best):p.rows+"×"+p.cols}</span></div>`;
+    b.setAttribute("aria-label",`Trail ${i+1}, ${p.rows} by ${p.cols}${best?", best "+fmt(best):""}`);
+    b.onclick=()=>openLevel(i);
+    li.appendChild(b); ul.appendChild(li);
+  });
+  renderStats(); renderChart();
+}
+
+/* ── hero animation ───────────────────────────────────── */
+(function(){
+  const p=PUZZLES[0], n=p.rows, cs=100/n, ctr=(r,c)=>[c*cs+cs/2,r*cs+cs/2];
+  let s=`<rect width="100" height="100" rx="9" fill="#311c4f"/>`;
+  for(let i=1;i<n;i++){
+    s+=`<line x1="0" y1="${i*cs}" x2="100" y2="${i*cs}" stroke="#4d3170" stroke-width="1"/>`;
+    s+=`<line x1="${i*cs}" y1="0" x2="${i*cs}" y2="100" stroke="#4d3170" stroke-width="1"/>`;
+  }
+  s+=`<polyline points="${p.solution.map(([r,c])=>ctr(r,c).join(",")).join(" ")}" fill="none"
+       stroke="#ffb23f" stroke-width="${cs*0.32}" stroke-linecap="round" stroke-linejoin="round" id="heroLine"/>`;
+  $("#heroArt").innerHTML=s;
+  const line=$("#heroLine");
+  if(line && !matchMedia("(prefers-reduced-motion: reduce)").matches){
+    const len=line.getTotalLength();
+    line.style.strokeDasharray=len;
+    line.animate([{strokeDashoffset:len},{strokeDashoffset:len,offset:.06},
+                  {strokeDashoffset:0,offset:.72},{strokeDashoffset:0}],
+                 {duration:5400,iterations:Infinity,easing:"ease-in-out"});
+  }
+})();
+
+/* ── play ─────────────────────────────────────────────── */
+let L=null; const CS=100, PAD=8;
+function openLevel(i){
+  const p=PUZZLES[i];
+  L={i,p,walls:(()=>{const s=new Set();p.walls.forEach(w=>{
+       const a=key(w.r,w.c), b=w.d==="R"?key(w.r,w.c+1):key(w.r+1,w.c);
+       s.add(a+"|"+b); s.add(b+"|"+a);});return s;})(),
+     checks:new Map(p.checks.map(c=>[key(c.r,c.c),c.n])),
+     path:[], t0:null, timer:null, solved:false};
+  document.body.classList.add("playing");
+  $("#plabel").textContent=`Trail ${i+1} · ${p.rows}×${p.cols}`;
+  $("#clock").textContent="0:00";
+  say("Start on 1.");
+  drawBoard(); window.scrollTo(0,0);
+}
+const boardXY=(r,c)=>[PAD+c*CS+CS/2, PAD+r*CS+CS/2];
+
+function drawBoard(){
+  const {p}=L, W=PAD*2+p.cols*CS, H=PAD*2+p.rows*CS, sv=$("#board");
+  sv.setAttribute("viewBox",`0 0 ${W} ${H}`);
+  sv.setAttribute("preserveAspectRatio","xMidYMid meet");
+  let s=`<defs><clipPath id="boardClip">
+      <rect x="${PAD-4}" y="${PAD-4}" width="${p.cols*CS+8}" height="${p.rows*CS+8}" rx="16"/>
+    </clipPath></defs>`;
+  s+=`<rect x="${PAD-4}" y="${PAD-4}" width="${p.cols*CS+8}" height="${p.rows*CS+8}" rx="16" fill="#2a163f"/>`;
+  s+=`<g clip-path="url(#boardClip)">`;
+  for(let r=0;r<p.rows;r++)for(let c=0;c<p.cols;c++)
+    s+=`<rect x="${PAD+c*CS+2}" y="${PAD+r*CS+2}" width="${CS-4}" height="${CS-4}" rx="7" fill="#311c4f"/>`;
+  if(L.path.length){
+    s+=`<polyline points="${L.path.map(([r,c])=>boardXY(r,c).join(",")).join(" ")}" fill="none"
+         stroke="#ffb23f" stroke-width="${CS*0.36}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const [hr,hc]=L.path[L.path.length-1], [hx,hy]=boardXY(hr,hc);
+    s+=`<circle cx="${hx}" cy="${hy}" r="${CS*0.24}" fill="#ff5d8f"/>`;
+  }
+  p.walls.forEach(w=>{const x=PAD+w.c*CS,y=PAD+w.r*CS;
+    s+= w.d==="R" ? `<line x1="${x+CS}" y1="${y+3}" x2="${x+CS}" y2="${y+CS-3}" stroke="#f7edff" stroke-width="8" stroke-linecap="round"/>`
+                  : `<line x1="${x+3}" y1="${y+CS}" x2="${x+CS-3}" y2="${y+CS}" stroke="#f7edff" stroke-width="8" stroke-linecap="round"/>`;});
+  const fs=p.rows>7?CS*0.34:CS*0.4;
+  p.checks.forEach(ch=>{const [x,y]=boardXY(ch.r,ch.c);
+    s+=`<circle cx="${x}" cy="${y}" r="${CS*0.30}" fill="#2a163f" stroke="#ffb23f" stroke-width="2.5"/>
+        <text x="${x}" y="${y}" fill="#f7edff" font-size="${fs}" font-weight="700" text-anchor="middle"
+          dominant-baseline="central" font-family="Instrument Sans,sans-serif">${ch.n}</text>`;});
+  s+=`</g>`;
+  sv.innerHTML=s;
+}
+
+/* exact screen→grid mapping, and strictly inside the board */
+function cellAt(ev){
+  const sv=$("#board"), ctm=sv.getScreenCTM();
+  if(!ctm) return null;
+  let u;
+  if(sv.createSVGPoint){ const pt=sv.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY;
+    u=pt.matrixTransform(ctm.inverse()); }
+  else { u=new DOMPoint(ev.clientX,ev.clientY).matrixTransform(ctm.inverse()); }
+  const x=u.x-PAD, y=u.y-PAD, {p}=L;
+  if(x<0||y<0||x>=p.cols*CS||y>=p.rows*CS) return null;   // outside the box: ignore
+  return [Math.floor(y/CS), Math.floor(x/CS)];
+}
+const inPath=(r,c)=>L.path.findIndex(q=>q[0]===r&&q[1]===c);
+const blocked=(a,b)=>L.walls.has(key(a[0],a[1])+"|"+key(b[0],b[1]));
+
+function tryStep(r,c){
+  if(L.solved) return;
+  const {p}=L;
+  if(r<0||c<0||r>=p.rows||c>=p.cols) return;
+  if(!L.path.length){
+    const one=p.checks.find(x=>x.n===1);
+    if(r===one.r&&c===one.c){ L.path=[[r,c]]; startClock(); say(""); drawBoard(); }
+    else say("Start on 1.",true);
+    return;
+  }
+  const idx=inPath(r,c);
+  if(idx>=0){ L.path=L.path.slice(0,idx+1); say(""); drawBoard(); return; }
+  const head=L.path[L.path.length-1];
+  if(Math.abs(head[0]-r)+Math.abs(head[1]-c)!==1) return;
+  if(blocked(head,[r,c])){ say("Wall in the way.",true); return; }
+  const num=L.checks.get(key(r,c));
+  if(num!==undefined){
+    const reached=L.path.filter(q=>L.checks.has(key(q[0],q[1]))).length;
+    if(num!==reached+1){ say(`${reached+1} comes before ${num}.`,true); return; }
+  }
+  L.path.push([r,c]); say(""); drawBoard(); checkWin();
+}
+function say(t,bad){ const m=$("#msg"); m.textContent=t; m.className="msg"+(bad?" bad":""); }
+
+function checkWin(){
+  const {p}=L;
+  if(L.path.length!==p.rows*p.cols) return;
+  const last=L.path[L.path.length-1], top=p.checks.length;
+  if(L.checks.get(key(last[0],last[1]))!==top) return;
+  L.solved=true; clearInterval(L.timer);
+  const ms=Date.now()-L.t0, prev=store.data.best[L.i], record=!prev||ms<prev;
+  if(record){ store.data.best[L.i]=ms; store.save(); }
+  renderHome();
+  $("#winTitle").textContent = prev ? (record?"New best time":"Solved again") : "Trail "+(L.i+1)+" done";
+  $("#winTime").textContent  = fmt(ms);
+  $("#winMsg").textContent   = WIN_MSG;
+  $("#winNext").style.display = L.i<PUZZLES.length-1 ? "" : "none";
+  $("#win").classList.add("show");
+}
+function startClock(){ L.t0=Date.now(); L.timer=setInterval(()=>{$("#clock").textContent=fmt(Date.now()-L.t0);},250); }
+
+let down=false;
+const sv=$("#board");
+sv.addEventListener("pointerdown",e=>{
+  const cell=cellAt(e); if(!cell) return;
+  down=true; try{sv.setPointerCapture(e.pointerId);}catch(err){}
+  tryStep(cell[0],cell[1]); e.preventDefault();
+},{passive:false});
+sv.addEventListener("pointermove",e=>{
+  if(!down) return;
+  const cell=cellAt(e);           // null while the finger is off the board
+  if(cell) tryStep(cell[0],cell[1]);
+  e.preventDefault();
+},{passive:false});
+["pointerup","pointercancel","pointerleave"].forEach(t=>sv.addEventListener(t,()=>{down=false;}));
+document.addEventListener("keydown",e=>{
+  if(!document.body.classList.contains("playing")||!L||!L.path.length) return;
+  const d={ArrowUp:[-1,0],ArrowDown:[1,0],ArrowLeft:[0,-1],ArrowRight:[0,1]}[e.key];
+  if(!d) return;
+  const h=L.path[L.path.length-1];
+  tryStep(h[0]+d[0],h[1]+d[1]); e.preventDefault();
+});
+
+$("#undo").onclick=()=>{ if(L&&L.path.length&&!L.solved){L.path.pop();say("");drawBoard();} };
+$("#reset").onclick=()=>{ if(L){L.path=[];say("Start on 1.");drawBoard();} };
+$("#nudge").onclick=()=>{
+  if(!L||L.solved) return;
+  const sol=L.p.solution;
+  let ok=L.path.length<=sol.length;
+  for(let i=0;i<L.path.length&&ok;i++)
+    if(L.path[i][0]!==sol[i][0]||L.path[i][1]!==sol[i][1]) ok=false;
+  if(!ok){
+    let m=0; while(m<L.path.length&&L.path[m][0]===sol[m][0]&&L.path[m][1]===sol[m][1]) m++;
+    L.path=L.path.slice(0,m);
+    say("That branch is a dead end — rolled back.",true); drawBoard(); return;
+  }
+  if(!L.path.length) startClock();
+  L.path.push(sol[L.path.length].slice());
+  say("One square, on the house."); drawBoard(); checkWin();
+};
+$("#back").onclick=$("#winBack").onclick=()=>{
+  if(L&&L.timer) clearInterval(L.timer);
+  $("#win").classList.remove("show");
+  document.body.classList.remove("playing");
+  renderHome();
+};
+$("#winNext").onclick=()=>{ $("#win").classList.remove("show"); openLevel(Math.min(L.i+1,PUZZLES.length-1)); };
+
+renderHome();
+</script>
+</body>
+</html>
